@@ -38,14 +38,15 @@ def load_csv_data(data_args) -> [pandas.DataFrame, pandas.DataFrame]:
 
     prompt_column = 'prompt' if not data_args.prompt_column else data_args.prompt_column
     response_column = 'response' if not data_args.response_column else data_args.response_column
-
+    history_column = 'history' if not data_args.history_column else data_args.history_column
     def load_data(df):
         data = df.to_dict(orient='records')
         result = []
         for datum in data:
             rp = datum[response_column] if isinstance(datum[response_column], str) else str(datum[response_column])
             pt = datum[prompt_column] if isinstance(datum[prompt_column], str) else str(datum[prompt_column])
-            result.append({'prompt': pt, 'response': rp})
+            hi = datum.get(history_column)
+            result.append({'prompt': pt, 'response': rp, 'history': hi})
         return pd.DataFrame(result)
 
     return load_data(pd.read_csv(data_args.train_file)), load_data(pd.read_csv(data_args.validation_file))

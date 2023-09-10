@@ -81,10 +81,12 @@ def main():
             model = AutoModel.from_pretrained(
                 model_args.model_name_or_path, config=config, trust_remote_code=True, device_map=device)
 
-    # model = AutoModel.from_pretrained(model_args.model_name_or_path, trust_remote_code=True).to(device)
+    if model_args.quantization_bit is not None:
+        print(f"Quantized to {model_args.quantization_bit} bit")
+        model = model.quantize(model_args.quantization_bit)
 
     # 缓存机制可以用来存储和重用某些计算结果，以加速连续解码的过程。然而，关闭缓存可能有助于节省内存，尤其是在处理长序列时
-    model.config.use_cache = False
+    model.config.use_cache = True
     # 梯度检查点是一种内存优化技术，它可以在一定程度上减少模型训练过程中的内存使用量，但可能会增加一些计算开销。这种技术特别适用于训练大型模型和处理长序列。
     model.supports_gradient_checkpointing = True
     model.gradient_checkpointing_enable()
@@ -93,17 +95,17 @@ def main():
     trainer = Trainer(model, lora_r=model_args.lora_r)
 
     processor = Processor(tokenizer)
-    dl_train, dl_val = processor.preprocess(data_args)
+    train_data, validation_data = processor.preprocess(data_args)
 
     '''训练'''
     if training_args.do_train:
-        trainer.train(training_args.output_dir, dl_train, dl_val,
+        trainer.train(training_args.output_dir, train_data, validation_data,
                       lr=training_args.learning_rate,
                       epochs=training_args.num_train_epochs,
                       gradient_accumulation_steps=training_args.gradient_accumulation_steps)
     '''评估'''
     if training_args.do_eval:
-        trainer.eval(dl_val)
+        trainer.eval(validation_data)
 
 
 if __name__ == "__main__":

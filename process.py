@@ -19,9 +19,8 @@ class Processor:
             }
             for i in range(len(examples["prompt"])):
                 if examples["prompt"][i] and examples["response"][i]:
-                    query, answer = examples["prompt"][i], examples["response"][i]
+                    query, answer, history = examples["prompt"][i], examples["response"][i], examples["history"][i]
 
-                    history = None
                     prompt = self.tokenizer.build_prompt(query, history)
 
                     a_ids = self.tokenizer.encode(text=prompt, add_special_tokens=True, truncation=True,
@@ -71,7 +70,7 @@ class Processor:
         )
 
         dl_train = DataLoader(ds_train, batch_size=1,
-                              num_workers=2, shuffle=True, collate_fn=data_collator)
+                              num_workers=data_args.preprocessing_num_workers, shuffle=True, collate_fn=data_collator)
         dl_val = DataLoader(ds_val, batch_size=1,
-                            num_workers=2, shuffle=False, collate_fn=data_collator)
+                            num_workers=data_args.preprocessing_num_workers, shuffle=False, collate_fn=data_collator)
         return dl_train, dl_val
